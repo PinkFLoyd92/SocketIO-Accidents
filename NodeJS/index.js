@@ -12,16 +12,12 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
 var path = require('path');
 app.use(express.static(path.join(__dirname, '')));
 app.set('views', __dirname + '/views');
-app.set('view engine', 'pug')
+app.set('view engine', 'ejs')
 app.use(express.static(path.join(__dirname, 'public'))) //static files served by public folder
 app.use('/bower_components',  express.static(__dirname + '/bower_components')); //static files served by bower
 var server = http.createServer(app);
 var mysql = require('mysql')
 var connection = mysql.createConnection({
-    host     : process.env.HOST ? process.env.HOST: 'localhost' ,
-    user     : process.env.USER ? process.env.USER: 'root',
-    password : process.env.PASS ? process.env.PASS: '123',
-    database : process.env.DB ? process.env.DB: 'nodos',
 });
 
 var io = require('socket.io').listen(server);  //pass a http.Server instance
@@ -38,7 +34,20 @@ app.get('/', function(req, res) {
 // })
 
 // connection.end()
-    res.render('index');
+    res.render('home');
+});
+
+
+connection.connect()
+app.get('/accidentes', function(req, res) {
+
+    connection.query('select * from accidente, vehiculo, persona, nodo where accidente.idnodo=nodo.idnodo and accidente.idvehiculo=vehiculo.placa and vehiculo.idpersona=persona.cedula;', function (err, rows) {
+    	if (err) throw err
+	var string=JSON.stringify(rows);
+        var accidentes =  JSON.parse(string);
+	console.log(accidentes)
+	res.render('accidentes', {'accidentes': accidentes});
+    })
 });
 
 app.get('/ip',function (req, res) {
